@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 class Encryption extends StatefulWidget {
   @override
@@ -14,7 +15,7 @@ class _EncryptionState extends State<Encryption> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Shortify"),
+        title: Text("Summarizer"),
       ),
       body: SingleChildScrollView(
         child: Container(
@@ -41,7 +42,7 @@ class _EncryptionState extends State<Encryption> {
                     setState(() {});
                   }
                 },
-                child: Text("Shorten"),
+                child: Text("Summarize"),
               ),
               SizedBox(
                 height: 50,
