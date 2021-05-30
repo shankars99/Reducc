@@ -29,8 +29,9 @@ def get_key():
     privKey = RSA.importKey(binPrivKey)
     pubKey  =  RSA.importKey(binPubKey)
 
-    encryptor = PKCS1_OAEP.new(pubKey)
-    encrypted = encryptor.encrypt(b'encrypt this message')
+    encrypt = "hi"
+    
+
     res = jsonify({'public_key':{
                         "n" : pubKey.n,
                         "e" : pubKey.e

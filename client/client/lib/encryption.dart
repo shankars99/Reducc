@@ -8,7 +8,7 @@ class Encryption extends StatefulWidget {
 class _EncryptionState extends State<Encryption> {
   TextEditingController tieWord = TextEditingController();
 
-  String len;
+  late String len = "";
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +34,7 @@ class _EncryptionState extends State<Encryption> {
               SizedBox(
                 height: 50,
               ),
-              RaisedButton(
+              ElevatedButton(
                 onPressed: () {
                   if (tieWord.text.toString().trim().length > 0) {
                     len = tieWord.text.toString();
@@ -48,12 +48,11 @@ class _EncryptionState extends State<Encryption> {
               ),
               Container(
                 margin: const EdgeInsets.all(10.0),
-                color: Colors.lightGreen[300],
                 width: 100.0,
                 height: 100.0,
                 child: Center(
                   child: Text(
-                    "${len != null ? len.length : ''}",
+                    "${len != "" ? len.length : ''}",
                     style: TextStyle(
                       fontSize: 25,
                       color: Colors.black,
