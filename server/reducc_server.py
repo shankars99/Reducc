@@ -1,6 +1,6 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from Crypto.Util.number import *
-from Crypto import Random
+import requests
 import Crypto
 import libnum
 
@@ -37,19 +37,33 @@ print(cod_msg)
 cods = cod_msg.split('-')
 print(cods)
 '''
+def chunkstring(string, length):
+    return (string[0+i:length+i].replace('-', '') for i in range(0, len(string), length))
 
-@app.route('/summarize/<body>', methods=['POST'])
-def get_summarize(body):
+@app.route('/summarize', methods=['POST'])
+def get_summarize():
+    body = request.get_json()['msg']
+    print(body)
     coded_words = body.split(' ')
+    sub_char_len = 2
     print(coded_words)
     ans = ""
     for coded_word in coded_words:
-        r=str(pow(int(coded_word),d, n))
-        for i in range(len(r)//3):
-            ans+=chr(int(r[3*(i):3*(i+1)])-3)
+        #print(coded_word)
+        chunk_coded = list(chunkstring(coded_word, 15))
+        for chunk_coded_word in chunk_coded:
+            print(chunk_coded_word)
+            r=str(pow(int(chunk_coded_word),d, n))
+            for i in range(len(r)//sub_char_len):
+                ans+=chr(int(r[sub_char_len*(i):sub_char_len*(i+1)]))
         ans+=" "
 
-    res = jsonify({'message': ans})
+    body = ans
+    resp = requests.post('https://api.smrzr.io/v1/summarize?num_sentences=5&algorithm=kmeans&min_length=40&max_length=500', data=body)
+    summary = resp.json()['summary']
+
+
+    res = jsonify({'message': summary.lower()})
     return res
 
 @app.route('/get_key', methods=['GET'])
