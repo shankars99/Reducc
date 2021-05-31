@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "big-integer": "^1.6.48",
-    "bigint-crypto-utils": "^3.0.14",
     "expo": "~41.0.1",
     "expo-status-bar": "~1.0.4",
     "react": "16.13.1",
