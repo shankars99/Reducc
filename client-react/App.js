@@ -87,9 +87,9 @@ class App extends React.Component {
       var subWordTokens = words[wordToken].match(/.{1,15}/g);
       //iterate through each subword and decode them
       for (var subSubWordTokens in subWordTokens) {
-        var temp = subWordTokens[subSubWordTokens].toString().replace('~', '')
-        var r = temp.replace('~', '')
-        var decoded_token = BigInt(parseInt(r)).modPow(this.state.clientKey.d, this.state.clientKey.n).toString()
+
+        var plain_token = subWordTokens[subSubWordTokens].toString().replace('~', '')
+        var decoded_token = BigInt(parseInt(plain_token)).modPow(this.state.clientKey.d, this.state.clientKey.n).toString()
         var i = 0
         while (i < decoded_token.length) {
           //splice the range over 2 integer values and get ASCII character
@@ -102,6 +102,32 @@ class App extends React.Component {
     return plainText
   }
 
+  rsa_keyGen() {
+    var bits = 24;
+    var p = 0;
+    var q = 0;
+
+    //generate two primes of 24 bits
+    forge.prime.generateProbablePrime(bits, function (err, num) {
+      p = num.data[0];
+    });
+    forge.prime.generateProbablePrime(bits, function (err, num) {
+      q = num.data[0];
+    });
+
+    //calculate the public key and private key of the server
+    var n = p * q
+    var phi_n = (p - 1) * (q - 1)
+    var e = 65537
+    var d = BigInt(e).modInv(phi_n)
+    this.setState({
+      clientKey: {
+        n: n,
+        e: e,
+        d: d
+      }
+    })
+  }
   //sends a HTTP-POST request with the cipherText as json to the server
   getSummary = () =>
     fetch(url + "/summarize", {
@@ -115,7 +141,7 @@ class App extends React.Component {
       .then((response) => response.json())
       .then((responseJson) => {
         this.setState({
-          summarizedText: this.rsa_decode(responseJson.summarized_text)
+          summarizedText: this.rsa_decode(responseJson.summarized_text).toLowerCase()
         })
         console.log("\nsummarized text : " + this.state.summarizedText)
       })
@@ -138,59 +164,13 @@ class App extends React.Component {
             e: public_key.e
           }
         })
-
-        var bits = 24;
-        var p = 0;
-        var q = 0;
-        forge.prime.generateProbablePrime(bits, function (err, num) {
-          p = num.data[0];
-        });
-        forge.prime.generateProbablePrime(bits, function (err, num) {
-          q = num.data[0];
-        });
-        var n = p * q
-        var phi_n = (p - 1) * (q - 1)
-        var e = 65537
-        var d = BigInt(e).modInv(phi_n)
-        this.setState({
-          clientKey: {
-            n: n,
-            e: e,
-            d: d
-          }
-        })
+        //generate client's public keys
+        this.rsa_keyGen()
+        console.log("\KEYS OF CLIENT :\n", this.state.clientKey)
       })
       .catch((error) => {
         console.error(error);
       });
-
-  modInverse(a, m) {
-    let g = this.gcd(a, m);
-    if (g != 1)
-      return ("Inverse doesn't exist");
-    else {
-      // If a and m are relatively prime, then modulo
-      // inverse is a^(m-2) mode m
-      return (this.power(a, m - 2, m));
-    }
-  }
-
-  // To compute x^y under modulo m
-  power(x, y, m) {
-    if (y == 0)
-      return 1;
-    let p = this.power(x, parseInt(y / 2), m) % m;
-    p = (p * p) % m;
-
-    return (y % 2 == 0) ? p : (x * p) % m;
-  }
-
-  // Function to return gcd of a and b
-  gcd(a, b) {
-    if (a == 0)
-      return b;
-    return this.gcd(b % a, a);
-  }
 
   //remove any trailing space-bars
   updatePlainText = (text) => this.setState({ plainText: text.trim() })
@@ -200,7 +180,7 @@ class App extends React.Component {
       <View style={styles.container}>
 
         {/* Input text-box that sets the state of plainText */}
-        <ScrollView>
+        <ScrollView showsVerticalScrollIndicator={true}>
           <TextInput style={styles.input}
             underlineColorAndroid="transparent"
             placeholder="Enter the text"

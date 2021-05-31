@@ -18,6 +18,8 @@ PHI = (p-1)*(q-1)
 e = 65537
 d = libnum.invmod(e, PHI)
 
+SubSubWordSize = 15
+
 
 @app.route('/getKey', methods=['GET'])
 def get_key():
@@ -29,24 +31,7 @@ def get_key():
     return res
 
 
-SubSubWordSize = 15
-'''
-cod_msg = ""
-for msg in ms:
-        m = ""
-        for ele in msg:
-            m += str(ord(ele))
-        m = int(m)
-        c=pow(m,e,n)
-        print("m " + str(m))
-        cod_msg += str(c) + " "
-        print("c " + str(c))
 
-cod_msg = cod_msg[:len(cod_msg)-1]
-print(cod_msg)
-cods = cod_msg.split('-')
-print(cods)
-'''
 
 # handles the summarization
 # note: since running it on the PC takes 40 minutes to load using an external source for the example
