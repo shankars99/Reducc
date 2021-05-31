@@ -31,18 +31,21 @@ class App extends React.Component {
     }
   };
 
-  //RSA encryption
+  //RSA stuff
   //As react native does not support BigInteger class we need to encode substrings of a size such that when it
   //exponeniates in the m^e%n it doesn't overflow and we lose data.
+  //converting to uppercase so as to maintain consistency of ASCII lengths, as a is 97 and c is 100
+  //also because numbers and other symbols are also of width : 2
+
+
   rsa_encode = () => {
-
+    
     //split the input into word tokens
-    //converting to uppercase so as to maintain consistency of ASCII lengths, as a is 97 and c is 100
-    //also because numbers and other symbols are also of width : 2
-
     var words = this.state.plainText.toUpperCase().split(' ');
     var cipherText = ""
     const SubSubWordTokenSize = 15
+    console.log("\n\nRSA-ENCODE\nWORD IN ASCII\tENCODED WORD CHAIN")
+    console.log("----------------------------------------------")
     //iterate through each token so as to split then into subtokens of manageable sizes as some tokens are too large
     for (let wordToken in words) {
       var cipherToken = ""
@@ -62,6 +65,7 @@ class App extends React.Component {
           collectionOfSubSubWordTokenChars += subWordTokens[subSubWordToken][subSubWordTokenChars].charCodeAt()
         }
         cipherToken = BigInt(collectionOfSubSubWordTokenChars).modPow(this.state.serverKey.e, this.state.serverKey.n).toString()
+        console.log(collectionOfSubSubWordTokenChars.padEnd(8, ' ') + "\t\t" + cipherToken);
 
         //pad a character at the end to make all the encoded words have the same size of 15
         cipherText += cipherToken.padEnd(SubSubWordTokenSize, '~')
@@ -73,13 +77,15 @@ class App extends React.Component {
     return (cipherText)
   }
 
+
   rsa_decode(cipherText) {
     var words = cipherText.split(' ');
     var plainText = "";
 
     //group together number of integers to convert to ASCII
     var subSubWordTokenSize = 2
-
+    console.log("\n\nRSA-DECODE\nENCODED WORD CHAIN\tWORD IN ASCII")
+    console.log("----------------------------------------------")
     //iterate through the words
     for (var wordToken in words) {
 
@@ -87,9 +93,10 @@ class App extends React.Component {
       var subWordTokens = words[wordToken].match(/.{1,15}/g);
       //iterate through each subword and decode them
       for (var subSubWordTokens in subWordTokens) {
-
+        //replace the terminal character with null
         var plain_token = subWordTokens[subSubWordTokens].toString().replace('~', '')
         var decoded_token = BigInt(parseInt(plain_token)).modPow(this.state.clientKey.d, this.state.clientKey.n).toString()
+        console.log(plain_token.padEnd(' ', 8) + "\t\t" + decoded_token);
         var i = 0
         while (i < decoded_token.length) {
           //splice the range over 2 integer values and get ASCII character

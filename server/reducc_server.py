@@ -31,8 +31,6 @@ def get_key():
     return res
 
 
-
-
 # handles the summarization
 # note: since running it on the PC takes 40 minutes to load using an external source for the example
 
@@ -53,6 +51,8 @@ def rsa_encode(plainText, clientKey):
     words = plainText.split(' ')
     cipherText = ""
     SubSubWordTokenSize = 15
+    print("\n\nRSA-ENCODE\nWORD IN ASCII\t\tENCODED WORD CHAIN")
+    print("----------------------------------------------")
     # iterate through each token so as to split then into subtokens of manageable sizes as some tokens are too large
     for wordToken in words:
         cipherToken = ""
@@ -67,9 +67,12 @@ def rsa_encode(plainText, clientKey):
             for subSubWordTokenChars in subSubWordToken:
 
                 # get the ASCII value of the character in the sub-sub-token
-                collectionOfSubSubWordTokenChars += str(ord(subSubWordTokenChars))
-
-            cipherToken = str(pow(int(collectionOfSubSubWordTokenChars), e, int(clientKey)))
+                collectionOfSubSubWordTokenChars += str(
+                    ord(subSubWordTokenChars))
+            cipherToken = str(
+                pow(int(collectionOfSubSubWordTokenChars), e, int(clientKey)))
+            print(collectionOfSubSubWordTokenChars.ljust(
+                8, ' ') + "\t\t" + cipherToken)
 
             # pad a character at the end to make all the encoded words have the same size of 15
             cipherText += cipherToken.ljust(SubSubWordTokenSize, '~')
@@ -86,7 +89,8 @@ def rsa_decode(cipherText):
 
     # group together number of integers to convert to ASCII
     subSubWordTokenSize = 2
-
+    print("RSA-DECODE\nENCODED WORD CHAIN\tWORD IN ASCII")
+    print("----------------------------------------------")
     # iterate through the words
     for wordToken in words:
 
@@ -98,6 +102,8 @@ def rsa_decode(cipherText):
 
             # RSA decoding using the private key : c^d%n
             decoded_token = str(pow(int(subSubWordToken), d, n))
+            print(subSubWordToken.ljust(8, ' ') +
+                  "\t\t" + str(decoded_token))
             # group together the characters so as to form words, since each group has 2 characters, iterate to half the length
             for i in range(len(decoded_token)//subSubWordTokenSize):
 
@@ -119,9 +125,9 @@ def handleSummarize():
     clientKey = request.get_json()['n']
     plainText = rsa_decode(cipherText)
 
-    rsa_encode(plainText, clientKey)
     # return a json with the summarized text
-    res = jsonify({'summarized_text': rsa_encode(summarize(plainText),clientKey)})
+    res = jsonify({'summarized_text': rsa_encode(
+        summarize(plainText), clientKey)})
     return res
 
 
