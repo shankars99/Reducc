@@ -6,20 +6,30 @@ import libnum
 
 app = Flask(__name__)
 
-bits=24
+# on loading the server generate the RSA keypair
+bits = 24
+
 p = Crypto.Util.number.getPrime(bits, randfunc=Crypto.Random.get_random_bytes)
 q = Crypto.Util.number.getPrime(bits, randfunc=Crypto.Random.get_random_bytes)
 
 n = p*q
-PHI=(p-1)*(q-1)
+PHI = (p-1)*(q-1)
 
-e=65537
-d=libnum.invmod(e,PHI)
+e = 65537
+d = libnum.invmod(e, PHI)
 
-msgs="hello there world"
 
-ms = msgs.split(" ")
+@app.route('/getKey', methods=['GET'])
+def get_key():
+    res = jsonify({
+        "n": n,
+        "e": e
+    })
 
+    return res
+
+
+SubSubWordSize = 15
 '''
 cod_msg = ""
 for msg in ms:
@@ -37,49 +47,100 @@ print(cod_msg)
 cods = cod_msg.split('-')
 print(cods)
 '''
-def chunkstring(string, length):
-    return (string[0+i:length+i].replace('-', '') for i in range(0, len(string), length))
+
+# handles the summarization
+# note: since running it on the PC takes 40 minutes to load using an external source for the example
+
+
+def summarize(plainText):
+    resp = requests.post(
+        'https://api.smrzr.io/v1/summarize?num_sentences=5&algorithm=kmeans&min_length=40&max_length=500', data=plainText)
+    summary = resp.json()['summary']
+    return summary
+
+
+# substrings the given string into 15 character long ones
+def chunkstring(string, length=SubSubWordSize):
+    return (string[0+i:length+i].replace('~', '') for i in range(0, len(string), length))
+
+
+def rsa_encode(plainText, clientKey):
+    words = plainText.split(' ')
+    cipherText = ""
+    SubSubWordTokenSize = 15
+    # iterate through each token so as to split then into subtokens of manageable sizes as some tokens are too large
+    for wordToken in words:
+        cipherToken = ""
+
+        subWordTokens = list(chunkstring(wordToken, 4))
+
+        # iterate through the sub-sub-tokens and encode them
+        for subSubWordToken in subWordTokens:
+
+            collectionOfSubSubWordTokenChars = ""
+
+            for subSubWordTokenChars in subSubWordToken:
+
+                # get the ASCII value of the character in the sub-sub-token
+                collectionOfSubSubWordTokenChars += str(ord(subSubWordTokenChars))
+
+            cipherToken = str(pow(int(collectionOfSubSubWordTokenChars), e, int(clientKey)))
+
+            # pad a character at the end to make all the encoded words have the same size of 15
+            cipherText += cipherToken.ljust(SubSubWordTokenSize, '~')
+
+        # add a space bar to the end of the word
+        cipherText += " "
+    return (cipherText)
+
+
+def rsa_decode(cipherText):
+    # tokenize the cipherText
+    words = cipherText.split(' ')
+    plainText = ""
+
+    # group together number of integers to convert to ASCII
+    subSubWordTokenSize = 2
+
+    # iterate through the words
+    for wordToken in words:
+
+        # get the formatted subword list
+        subWordToken = list(chunkstring(wordToken))
+
+        # iterate through each subword and decode them
+        for subSubWordToken in subWordToken:
+
+            # RSA decoding using the private key : c^d%n
+            decoded_token = str(pow(int(subSubWordToken), d, n))
+            # group together the characters so as to form words, since each group has 2 characters, iterate to half the length
+            for i in range(len(decoded_token)//subSubWordTokenSize):
+
+                # splice the range over 2 integer values and get ASCII character
+                plainText += chr(
+                    int(decoded_token[subSubWordTokenSize*(i):subSubWordTokenSize*(i+1)]))
+
+        # add a space-bar to the end of the word
+        plainText += " "
+    return plainText
+
+# handle the HTTP-POST at summarize
+
 
 @app.route('/summarize', methods=['POST'])
-def get_summarize():
-    body = request.get_json()['msg']
-    print(body)
-    coded_words = body.split(' ')
-    sub_char_len = 2
-    print(coded_words)
-    ans = ""
-    for coded_word in coded_words:
-        #print(coded_word)
-        chunk_coded = list(chunkstring(coded_word, 15))
-        for chunk_coded_word in chunk_coded:
-            print(chunk_coded_word)
-            r=str(pow(int(chunk_coded_word),d, n))
-            for i in range(len(r)//sub_char_len):
-                ans+=chr(int(r[sub_char_len*(i):sub_char_len*(i+1)]))
-        ans+=" "
+def handleSummarize():
+    # extract from the request json the value of key 'cipher_text'
+    cipherText = request.get_json()['cipher_text']
+    clientKey = request.get_json()['n']
+    plainText = rsa_decode(cipherText)
 
-    body = ans
-    resp = requests.post('https://api.smrzr.io/v1/summarize?num_sentences=5&algorithm=kmeans&min_length=40&max_length=500', data=body)
-    summary = resp.json()['summary']
-
-
-    res = jsonify({'message': summary.lower()})
+    rsa_encode(plainText, clientKey)
+    # return a json with the summarized text
+    res = jsonify({'summarized_text': rsa_encode(summarize(plainText),clientKey)})
     return res
 
-@app.route('/get_key', methods=['GET'])
-def get_key():
-    res = jsonify({
-                        "n" : n,
-                        "e" : e
-                })
 
-    return res
-
-@app.route('/summarizer/<raw_text>',methods = ['POST'])
-def summarizer(raw_text):
-    print(raw_text)
-    return jsonify({'raw_text': raw_text})
-
-@app.route('/',methods = ['GET', 'POST'])
+# test connection a homepage
+@app.route('/', methods=['GET', 'POST'])
 def home():
-    return jsonify({'message': 'Welcome to the server', 'status': 200})
+    return jsonify({'message': 'Server is up and running', 'status': 200})
