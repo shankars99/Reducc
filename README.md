@@ -2,7 +2,7 @@
 A mobile app built on flutter that works on encoded data and summarizes your bod of text
 
 
-<h1>Install the required files </h1> </br> 
+<h1>Install the required files </h1> </br>
 
 install ngrok from [here](https://ngrok.com/) or any other port forwarding software
 
