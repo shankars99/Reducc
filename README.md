@@ -1,5 +1,5 @@
 # Reducc
-A mobile app built on flutter that works on encoded data and summarizes your bod of text
+A mobile app built on react-native with a flask server that works on encoded data and summarizes your body of text
 
 
 <h1>Install the required files </h1> </br>
