@@ -41,3 +41,6 @@ expo start
 ```
 you would now see a QR code, scan that on the expo app
 
+Note: the server logs are located [here](/extras/client_log.txt), and the client logs [here](/extras/serv_log.txt), which are essentially the encryption process and decryption process of the full sized words into chained-subwwords of size 4, into RSA 
+
+<a href="url"><img src="/extras/reducc-demo.webp" align="left" height="400" width="250" ></a>
